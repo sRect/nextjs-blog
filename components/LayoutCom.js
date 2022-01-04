@@ -1,8 +1,15 @@
 import Head from "next/head";
-import Link from "next/link";
+import { useRouter } from "next/router";
+import { NavBar } from "antd-mobile";
 import { SafeArea } from "antd-mobile";
 
-export default function LayoutCom({ children, home }) {
+export default function LayoutCom({ children, home, inTitle }) {
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <div className="wrapper">
       <SafeArea position="top" />
@@ -19,12 +26,13 @@ export default function LayoutCom({ children, home }) {
         <meta name="description" content="srect blog" />
         <title>sRect blog</title>
       </Head>
-      <main>{children}</main>
+
       {!home && (
-        <Link href="/">
-          <a>返回首页</a>
-        </Link>
+        <NavBar onBack={handleBack} back="返回">
+          {inTitle}
+        </NavBar>
       )}
+      <main>{children}</main>
       <SafeArea position="bottom" />
       <style jsx>
         {`

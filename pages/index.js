@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useRef, useEffect, useCallback } from "react";
 import { UnorderedListOutline, UserOutline } from "antd-mobile-icons";
 import LayoutCom from "@/components/LayoutCom";
@@ -41,12 +42,17 @@ export default function Home() {
           </h1>
 
           <div className={styles.content}>
-            <p>
-              <UnorderedListOutline fontSize={20} /> 文章列表
-            </p>
-            <p>
-              <UserOutline fontSize={20} /> 关于我
-            </p>
+            <Link href="/list" passHref>
+              <p>
+                <UnorderedListOutline fontSize={20} /> 文章列表
+              </p>
+            </Link>
+
+            <Link href="/about" passHref>
+              <p>
+                <UserOutline fontSize={20} /> 关于我
+              </p>
+            </Link>
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ export default function LayoutCom({ children, home, inTitle }) {
         />
         <meta
           name="keywords"
-          content="Next.js | React.js | Node.js | Antd-Mobile"
+          content="sRect blog | Next.js | React.js | Node.js | Antd-Mobile"
         />
         <meta name="description" content="srect blog" />
         <title>sRect blog</title>

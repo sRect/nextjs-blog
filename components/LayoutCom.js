@@ -7,7 +7,7 @@ export default function LayoutCom({ children, home, inTitle }) {
   const router = useRouter();
 
   const handleBack = () => {
-    router.back();
+    router.route === "/404" ? router.replace("/") : router.back();
   };
 
   return (
@@ -28,7 +28,10 @@ export default function LayoutCom({ children, home, inTitle }) {
       </Head>
 
       {!home && (
-        <NavBar onBack={handleBack} back="返回">
+        <NavBar
+          onBack={handleBack}
+          back={router.route === "/404" ? "返回首页" : "返回"}
+        >
           {inTitle}
         </NavBar>
       )}

@@ -1,5 +1,9 @@
 @import "~normalize.css/normalize.css";
 
+:root {
+  --home-background: url('/images/test1.png');
+}
+
 html,
 body {
   width: 100%;

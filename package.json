@@ -11,6 +11,7 @@
     "@babel/core": "^7.16.7",
     "@babel/preset-env": "^7.16.7",
     "antd-mobile": "^5.0.0-rc.12",
+    "antd-mobile-icons": "^0.2.2",
     "next": "12.0.7",
     "normalize.css": "^8.0.1",
     "react": "17.0.2",

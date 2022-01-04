@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
+import { UnorderedListOutline, UserOutline } from "antd-mobile-icons";
 import LayoutCom from "@/components/LayoutCom";
 import styles from "@/styles/Home.module.css";
 
@@ -12,7 +13,6 @@ export default function Home() {
   const bgTotalNum = allBgList.keys().length / 2;
 
   const handleChangeBgImg = useCallback(() => {
-    console.log("click!!!", wrapperRef.current.className);
     bgNumRef.current += 1;
 
     if (bgNumRef.current > bgTotalNum) bgNumRef.current = 1;
@@ -39,6 +39,15 @@ export default function Home() {
           <h1 className={styles.header} ref={h1Ref}>
             个人博客
           </h1>
+
+          <div className={styles.content}>
+            <p>
+              <UnorderedListOutline fontSize={20} /> 文章列表
+            </p>
+            <p>
+              <UserOutline fontSize={20} /> 关于我
+            </p>
+          </div>
         </div>
       </div>
     </LayoutCom>

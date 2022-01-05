@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRef, useEffect, useCallback } from "react";
-import { UnorderedListOutline, UserOutline } from "antd-mobile-icons";
+import { TextOutline, UserOutline } from "antd-mobile-icons";
 import LayoutCom from "@/components/LayoutCom";
 import styles from "@/styles/Home.module.css";
 
@@ -44,7 +44,7 @@ export default function Home() {
           <div className={styles.content}>
             <Link href="/posts/list" passHref>
               <p>
-                <UnorderedListOutline fontSize={20} /> 文章列表
+                <TextOutline fontSize={20} /> 文章列表
               </p>
             </Link>
 

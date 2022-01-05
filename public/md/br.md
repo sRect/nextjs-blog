@@ -8,7 +8,7 @@ date: "2021-12-23"
 
 最近跟着 `Next.js`文档在学习新手入门，最终打包部署在 `Vercel`上，当 F12 打开浏览器控制台，点击 Network 选项时，看到`Content-Encoding`一列，显示着 `br`，这是什么鬼？不是 `gzip`吗，这都触及到了我的知识盲区了，一起来了解下。
 
-![Dingtalk_20211222151606.jpg](https://s2.loli.net/2021/12/22/2tzXxUwinTs8AGe.jpg)
+![Dingtalk_20211222151606.jpg](../images/br/br.jpg)
 
 ### 2.`Brotli`是什么？
 
@@ -38,7 +38,7 @@ br 的全称是 Brotli
 ### 4. Brotli [兼容性](https://caniuse.com/?search=Brotli)
 
 除了 ie 和 opera mini 之外，其它的都已支持
-![Dingtalk_20211222150634.jpg](https://s2.loli.net/2021/12/22/re6R8injzNGy3WS.jpg)
+![Dingtalk_20211222151606.jpg](../images/br/br2.jpg)
 
 ### 5. Nginx 开启 gzip
 

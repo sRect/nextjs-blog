@@ -35,10 +35,13 @@ jobs:
       # - name: build
       #   run: sudo yarn run build
 
+      # docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.ALIYUN_DOCKER_PASSWORD }}
+
       # 制作docker镜像并推送到阿里云容器镜像服务
       - name: build and push docker image
         run: |
-          docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin=${{ secrets.ALIYUN_DOCKER_PASSWORD }}
+          echo | set /p=${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+
           docker image build -t srectblog:latest .
           docker tag srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
           docker push registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
@@ -50,7 +53,7 @@ jobs:
           command: |
             cd /
             echo -e "1.docker login start==>"
-            docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin=${{ secrets.ALIYUN_DOCKER_PASSWORD }}
+            echo | set /p=${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
             echo -e "2.docker stop myblog container==>"
             docker container stop srectblog

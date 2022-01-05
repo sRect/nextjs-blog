@@ -7,6 +7,7 @@ import {
   PullToRefresh,
   Tag,
   Space,
+  Toast,
 } from "antd-mobile";
 import { sleep } from "antd-mobile/es/utils/sleep";
 import styled from "styled-components";
@@ -50,6 +51,13 @@ export default function List({ allListData }) {
   const gotoDetail = (data) => {
     const { fileName: detailid } = data;
 
+    Toast.show({
+      icon: "loading",
+      content: "加载中…",
+      maskClickable: false,
+      duration: 0,
+    });
+
     // https://www.nextjs.cn/docs/api-reference/next/router#with-url-object
     router.push({
       pathname: "/posts/[detailid]",
@@ -64,7 +72,7 @@ export default function List({ allListData }) {
 
     setTimeout(() => {
       setSkeletonLoading(false);
-    }, 1000);
+    }, 20);
   }, [allListData]);
 
   return (

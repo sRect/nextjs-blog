@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { useEffect } from "react";
+import { Toast } from "antd-mobile";
 import hljs from "highlight.js";
 import LayoutCom from "@/components/LayoutCom";
 import { getPostData, getAllPostIds } from "@/lib/posts";
@@ -32,6 +33,8 @@ export async function getStaticProps(args) {
 
 export default function Post({ postData }) {
   useEffect(() => {
+    Toast.clear();
+
     const codeElList = document.querySelectorAll("pre code");
     [...codeElList].forEach((el) => {
       hljs.highlightElement(el);

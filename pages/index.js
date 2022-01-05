@@ -42,13 +42,13 @@ export default function Home() {
           </h1>
 
           <div className={styles.content}>
-            <Link href="/list" passHref>
+            <Link href="/posts/list" passHref>
               <p>
                 <UnorderedListOutline fontSize={20} /> 文章列表
               </p>
             </Link>
 
-            <Link href="/about" passHref>
+            <Link href="/posts/about" passHref>
               <p>
                 <UserOutline fontSize={20} /> 关于我
               </p>

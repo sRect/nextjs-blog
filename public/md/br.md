@@ -1,6 +1,6 @@
 ---
 title: "content-encoding: br 是什么编码格式？"
-subTitle: "subTitle Brotli"
+keywords: "nginx, br"
 date: "2021-12-23"
 ---
 

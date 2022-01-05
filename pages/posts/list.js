@@ -1,8 +1,16 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
-import { List as AntdList, Skeleton, PullToRefresh } from "antd-mobile";
+import {
+  List as AntdList,
+  Skeleton,
+  PullToRefresh,
+  Tag,
+  Space,
+} from "antd-mobile";
 import { sleep } from "antd-mobile/es/utils/sleep";
 import styled from "styled-components";
+// import useSWR from "swr";
 import LayoutCom from "@/components/LayoutCom";
 import { getAllPostIds } from "@/lib/posts";
 import Result from "@/components/Result";
@@ -13,6 +21,8 @@ const PULL_REFRESH_STATUS = {
   refreshing: "玩命加载中...",
   complete: "加载完成",
 };
+
+const tagColors = ["default", "primary", "success", "warning", "danger"];
 
 const Wrapper = styled.div`
   width: 100%;
@@ -33,11 +43,28 @@ export async function getStaticProps() {
 }
 
 export default function List({ allListData }) {
+  const router = useRouter();
   const [skeletonLoading, setSkeletonLoading] = useState(true);
   const [pageList, setPageList] = useState([]);
 
+  const gotoDetail = (data) => {
+    console.log(data);
+    const { fileName: detailid } = data;
+
+    // https://www.nextjs.cn/docs/api-reference/next/router#with-url-object
+    router.push({
+      pathname: "/posts/[detailid]",
+      query: {
+        detailid,
+      },
+      asPath: "hello",
+    });
+  };
+
   useEffect(() => {
     setPageList(allListData);
+
+    console.log(allListData);
 
     setTimeout(() => {
       setSkeletonLoading(false);
@@ -66,8 +93,24 @@ export default function List({ allListData }) {
               <AntdList>
                 {pageList.map((item) => {
                   return (
-                    <AntdList.Item key={item.id} clickable>
-                      {item.name}
+                    <AntdList.Item
+                      key={item.id}
+                      clickable
+                      onClick={() => gotoDetail(item)}
+                      description={
+                        <Space>
+                          {item.keywords.map((keywords, index) => (
+                            <Tag
+                              color={tagColors[Math.floor(Math.random() * 6)]}
+                              key={index}
+                            >
+                              {keywords}
+                            </Tag>
+                          ))}
+                        </Space>
+                      }
+                    >
+                      {item.title}
                     </AntdList.Item>
                   );
                 })}

@@ -42,7 +42,12 @@ export default function Home() {
           </h1>
 
           <div className={styles.content}>
-            <Link href="/posts/list" passHref>
+            <Link
+              href={{
+                pathname: "/posts/list",
+              }}
+              passHref
+            >
               <p>
                 <TextOutline fontSize={20} /> 文章列表
               </p>

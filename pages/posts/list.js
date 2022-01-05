@@ -75,6 +75,11 @@ export default function List({ allListData }) {
     }, 20);
   }, [allListData]);
 
+  useEffect(() => {
+    // https://www.nextjs.cn/docs/api-reference/next/router#usage-2
+    router.prefetch("/posts/[detailid]");
+  }, [router]);
+
   return (
     <LayoutCom>
       <Head>

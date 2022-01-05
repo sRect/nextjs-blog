@@ -1,0 +1,73 @@
+name: Docker Image CI
+
+on:
+  push: # push 时触发ci
+    branches: [main] # 作用于main分支
+  # pull_request:
+  #   branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     node-version: [14.x]
+    #     # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      # 拉取main分支代码
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # # 指定nodejs版本
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v2
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
+      #     cache: "yarn"
+
+      # # 安装依赖
+      # - name: install
+      #   run: sudo yarn install
+
+      # # 打包
+      # - name: build
+      #   run: sudo yarn run build
+
+      # 制作docker镜像并推送到阿里云容器镜像服务
+      - name: build and push docker image
+        run: |
+          docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.ALIYUN_DOCKER_PASSWORD }}
+          docker image build -t srectblog:latest .
+          docker tag srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+          docker push registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+      # 登录远程服务器，拉取镜像，制作并重启容器
+      # https://github.com/marketplace/actions/remote-ssh-commands
+      - name: ssh remote deploy
+        uses: fifsky/ssh-action@master
+        with:
+          command: |
+            cd /
+            echo -e "1.docker login start==>"
+            docker login --username=${{ secrets.ALIYUN_DOCKER_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password=${{ secrets.ALIYUN_DOCKER_PASSWORD }}
+
+            echo -e "2.docker stop myblog container==>"
+            docker container stop srectblog
+
+            echo -e "3.docker conatainer rm==>"
+            docker container rm srectblog
+
+            echo -e "4.docker image rm==>"
+            docker image rm registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "5.docker pull==>"
+            docker pull registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "6.docker container create and start==>"
+            docker container run -d -p 80:3000 --name srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "7.deploy success==>"
+          host: ${{ secrets.HOST }}
+          user: ${{ secrets.USER }}
+          pass: ${{ secrets.PASSWORD }}

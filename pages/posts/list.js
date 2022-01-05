@@ -48,7 +48,6 @@ export default function List({ allListData }) {
   const [pageList, setPageList] = useState([]);
 
   const gotoDetail = (data) => {
-    console.log(data);
     const { fileName: detailid } = data;
 
     // https://www.nextjs.cn/docs/api-reference/next/router#with-url-object
@@ -57,14 +56,11 @@ export default function List({ allListData }) {
       query: {
         detailid,
       },
-      asPath: "hello",
     });
   };
 
   useEffect(() => {
     setPageList(allListData);
-
-    console.log(allListData);
 
     setTimeout(() => {
       setSkeletonLoading(false);
@@ -98,16 +94,23 @@ export default function List({ allListData }) {
                       clickable
                       onClick={() => gotoDetail(item)}
                       description={
-                        <Space>
-                          {item.keywords.map((keywords, index) => (
-                            <Tag
-                              color={tagColors[Math.floor(Math.random() * 6)]}
-                              key={index}
-                            >
-                              {keywords}
-                            </Tag>
-                          ))}
-                        </Space>
+                        <>
+                          <div style={{ margin: "6px 0" }}>
+                            <Space>
+                              {item.keywords.map((keywords, index) => (
+                                <Tag
+                                  color={
+                                    tagColors[Math.floor(Math.random() * 6)]
+                                  }
+                                  key={index}
+                                >
+                                  {keywords}
+                                </Tag>
+                              ))}
+                            </Space>
+                          </div>
+                          <span>{item.date}</span>
+                        </>
                       }
                     >
                       {item.title}

@@ -40,7 +40,7 @@ jobs:
       # 制作docker镜像并推送到阿里云容器镜像服务
       - name: build and push docker image
         run: |
-          echo ${{ secrets.ALIYUN_DOCKER_USERNAME }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
           docker image build -t srectblog:latest .
           docker tag srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
@@ -54,7 +54,7 @@ jobs:
           command: |
             cd /
             echo -e "1.docker login start==>"
-            echo ${{ secrets.DOCKER_TOKEN }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+            echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
             echo -e "2.docker stop myblog container==>"
             docker container stop srectblog

@@ -8,8 +8,17 @@
   z-index: 1;
 }
 
+.homeBgImg {
+  z-index: 0;
+  backface-visibility: hidden;
+  transform: translateZ(0) scale(1.0, 1.0);
+  animation: animate 20s linear infinite;
+  animation-direction: alternate;
+  transition: all 0.2s ease-in-out;
+}
+
 /* https://github.com/hanumancode/Background-Image-Animation-CSS3/blob/master/style.css */
-.wrapper::after {
+/* .wrapper::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -36,7 +45,7 @@
   animation-direction: alternate;
   transition: all 0.2s ease-in-out;
   z-index: -2;
-}
+} */
 
 @keyframes animate {
   0% {

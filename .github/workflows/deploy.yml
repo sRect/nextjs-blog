@@ -40,11 +40,12 @@ jobs:
       # 制作docker镜像并推送到阿里云容器镜像服务
       - name: build and push docker image
         run: |
-          echo | set /p=${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
           docker image build -t srectblog:latest .
           docker tag srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
           docker push registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+          docker logout
       # 登录远程服务器，拉取镜像，制作并重启容器
       # https://github.com/marketplace/actions/remote-ssh-commands
       - name: ssh remote deploy
@@ -53,7 +54,7 @@ jobs:
           command: |
             cd /
             echo -e "1.docker login start==>"
-            echo | set /p=${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+            echo ${{ secrets.DOCKER_TOKEN }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
             echo -e "2.docker stop myblog container==>"
             docker container stop srectblog
@@ -70,7 +71,8 @@ jobs:
             echo -e "6.docker container create and start==>"
             docker container run -d -p 80:3000 --name srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
 
-            echo -e "7.deploy success==>"
+            echo -e "7.docker logout==>"
+            docker logout
           host: ${{ secrets.HOST }}
           user: ${{ secrets.USER }}
           pass: ${{ secrets.PASSWORD }}

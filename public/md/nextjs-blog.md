@@ -1,4 +1,8 @@
-## 使用 Next.js + Docker 快速上手一个属于你的私人博客
+---
+title: "使用 Next.js + Docker 打造一个属于你的私人博客"
+keywords: "Next.js, Docker, github Actions, CI, CD"
+date: "2021-12-23"
+---
 
 ### 1. Next.js 简介
 
@@ -340,11 +344,11 @@ export default function List({ list }) {
 
 > 这里服务器以 centos 为例
 
-###### 第1步：Dockerfile文件
+###### 第 1 步：Dockerfile 文件
 
 1. 使用 Next.js[官方 Dockerfile](https://www.nextjs.cn/docs/deployment#docker-image)
 
-**注意**：如果使用官方Dockerfile，比如在阿里云上进行部署，会遇到网络问题，下载某些包会很慢，跟你本地访问github官网一样，所以要设置国内镜像下载，速度就会变快
+**注意**：如果使用官方 Dockerfile，比如在阿里云上进行部署，会遇到网络问题，下载某些包会很慢，跟你本地访问 github 官网一样，所以要设置国内镜像下载，速度就会变快
 
 ```
 # Install dependencies only when needed
@@ -392,9 +396,9 @@ ENV PORT 3000
 CMD ["node_modules/.bin/next", "start"]
 ```
 
-2. 使用自己的Dockerfile
+2. 使用自己的 Dockerfile
 
-> 这里可以对Docker进行多阶段构建，使打包出来的镜像体积变小
+> 这里可以对 Docker 进行多阶段构建，使打包出来的镜像体积变小
 
 ```bash
 # 1. 构建基础镜像
@@ -435,7 +439,7 @@ EXPOSE 3000
 CMD ["yarn", "start"]
 ```
 
-###### 第2步： 将源代码搞到服务器上
+###### 第 2 步： 将源代码搞到服务器上
 
 1. 使用`scp`命令手动将本地源代码上传至服务器
 
@@ -453,14 +457,15 @@ wget https://github.com/xxx/main.zip -O main.zip && unzip main.zip -d .
 
 上面 3 种方法都可以把本地文件传到服务器对应目录
 
-###### 第3步： docker镜像制作
+###### 第 3 步： docker 镜像制作
 
-> 前提是安装好了docker并启动
+> 前提是安装好了 docker 并启动
 
 ```bash
 # 切换都源码目录执行
 docker image build -t blog-demo .
 ```
+
 接着会看到命令行上正在执行镜像制作过程，顺利的话，就成功了
 
 ![build](../images/nextjs-blog/build.jpg)
@@ -470,7 +475,8 @@ docker image build -t blog-demo .
 docker image ls
 ```
 
-###### 第4步： 启动容器
+###### 第 4 步： 启动容器
+
 > 前提要在服务器上开好安全组
 
 ```
@@ -486,20 +492,21 @@ docker container run -d -p 80:3000 -it blog-demo
 
 > 上面手动步骤太麻烦了，需要解放双手
 
-这里也可以选择dockerhub，注册好后，创建仓库，即可推送。阿里云的镜像容器服务，也需要提前开通准备好（命名空间+私人仓库）。
+这里也可以选择 dockerhub，注册好后，创建仓库，即可推送。阿里云的镜像容器服务，也需要提前开通准备好（命名空间+私人仓库）。
 
-###### 第1步：提前准备好
-+ 容器登录账号+密码
-+ 服务器的HOST + 登录账户 + 密码
-+ 阿里云或者dockerhub的镜像容器仓库
+###### 第 1 步：提前准备好
 
-###### 第2步：github 该仓库Settings->Secrets 添加秘钥，即上面准备好的这5个
+- 容器登录账号+密码
+- 服务器的 HOST + 登录账户 + 密码
+- 阿里云或者 dockerhub 的镜像容器仓库
 
-> 我这里买的是阿里云的屌丝1核2G机器，生产环境别这么玩，账号密码可能泄露
+###### 第 2 步：github 该仓库 Settings->Secrets 添加秘钥，即上面准备好的这 5 个
+
+> 我这里买的是阿里云的屌丝 1 核 2G 机器，生产环境别这么玩，账号密码可能泄露
 
 ![secrets](../images/nextjs-blog/secrets.jpg)
 
-###### 第3步：项目根目录添加`github yml`配置文件
+###### 第 3 步：项目根目录添加`github yml`配置文件
 
 > .github/workflows/deploy.yml
 
@@ -562,20 +569,22 @@ jobs:
           pass: ${{ secrets.PASSWORD }}
 
 ```
-###### 第4步：提交代码，自动部署
-> 不出意外，在仓库的Actions里看到一切ok
+
+###### 第 4 步：提交代码，自动部署
+
+> 不出意外，在仓库的 Actions 里看到一切 ok
 
 ```
 git add .
 git commit -m "chore: add github actions yml"
 git push -u origin main
 ```
-![deploy](../images/nextjs-blog/deploy.jpg)
 
+![deploy](../images/nextjs-blog/deploy.jpg)
 
 ### 5. 参考资料
 
-1. [Next.js官方文档](https://nextjs.org/docs/getting-started)
+1. [Next.js 官方文档](https://nextjs.org/docs/getting-started)
 
 2. [如何优化 node 项目的 docker 镜像](https://juejin.cn/post/6991689670027542564)
 

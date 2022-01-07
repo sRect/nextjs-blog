@@ -1,10 +1,10 @@
-## 使用 Next.js 快速上手一个属于你的私人博客
+## 使用 Next.js + Docker 快速上手一个属于你的私人博客
 
 ### 1. Next.js 简介
 
 > [The React Framework for Production] Next.js gives you the best developer experience with all the features you need for production: hybrid static & server rendering, TypeScript support, smart bundling, route pre-fetching, and more. No config needed.
 
-一顿牛皮吹下来，就是 Next.js 在生产和开发环境下都能带给你最佳体验，开箱体验，无需任何配置
+一顿牛皮下来，就是 Next.js 在生产和开发环境下都能带给你最佳体验，开箱体验，无需任何配置
 
 ### 2. 为什么选择 Next.js
 
@@ -332,8 +332,255 @@ export default function List({ list }) {
 
 #### 4.1 使用 Vercel 快速部署
 
-### 参考资料
+使用 github 账户注册登录[Vercel](https://vercel.com/)官网，授权访问该仓库，即可快速部署，部署完即可访问。还能看到部署日志。
 
-1. [官方文档](https://nextjs.org/docs/getting-started)
+#### 4.2 部署到自己的服务器
 
-2. [前后端同构和模板渲染的区别是什么呢？](https://www.zhihu.com/question/379598562)
+##### 4.2.1 在服务器上进行 docker 镜像制作，然后部署
+
+> 这里服务器以 centos 为例
+
+###### 第1步：Dockerfile文件
+
+1. 使用 Next.js[官方 Dockerfile](https://www.nextjs.cn/docs/deployment#docker-image)
+
+**注意**：如果使用官方Dockerfile，比如在阿里云上进行部署，会遇到网络问题，下载某些包会很慢，跟你本地访问github官网一样，所以要设置国内镜像下载，速度就会变快
+
+```
+# Install dependencies only when needed
+FROM node:alpine AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+# Rebuild the source code only when needed
+FROM node:alpine AS builder
+WORKDIR /app
+COPY . .
+COPY --from=deps /app/node_modules ./node_modules
+RUN yarn build && yarn install --production --ignore-scripts --prefer-offline
+
+# Production image, copy all the files and run next
+FROM node:alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# You only need to copy next.config.js if you are NOT using the default configuration
+# COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry.
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+CMD ["node_modules/.bin/next", "start"]
+```
+
+2. 使用自己的Dockerfile
+
+> 这里可以对Docker进行多阶段构建，使打包出来的镜像体积变小
+
+```bash
+# 1. 构建基础镜像
+FROM alpine:3.15 AS base
+#纯净版镜像
+
+ENV NODE_ENV=production \
+  APP_PATH=/app
+
+WORKDIR $APP_PATH
+
+# 使用国内镜像，加速下面 apk add下载安装alpine不稳定情况
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 使用apk命令安装 nodejs 和 yarn
+RUN apk add --no-cache --update nodejs=16.13.1-r0 yarn=1.22.17-r0
+
+# 2. 基于基础镜像安装项目依赖
+FROM base AS install
+
+COPY package.json yarn.lock ./
+
+RUN yarn install
+
+# 3. 基于基础镜像进行最终构建
+FROM base
+
+# 拷贝 上面生成的 node_modules 文件夹复制到最终的工作目录下
+COPY --from=install $APP_PATH/node_modules ./node_modules
+
+# 拷贝当前目录下的所有文件(除了.dockerignore里排除的)，都拷贝到工作目录下
+COPY . .
+
+RUN yarn build
+
+EXPOSE 3000
+
+CMD ["yarn", "start"]
+```
+
+###### 第2步： 将源代码搞到服务器上
+
+1. 使用`scp`命令手动将本地源代码上传至服务器
+
+```bash
+scp -r local_dir root@121.xxx.xxx.xxx:remote_dir
+```
+
+2. 或者在远程服务器上`wget`下载 github 源码，然后解压
+
+```bash
+wget https://github.com/xxx/main.zip -O main.zip && unzip main.zip -d .
+```
+
+3. 使用`xshell`工具上传文件到服务器
+
+上面 3 种方法都可以把本地文件传到服务器对应目录
+
+###### 第3步： docker镜像制作
+
+> 前提是安装好了docker并启动
+
+```bash
+# 切换都源码目录执行
+docker image build -t blog-demo .
+```
+接着会看到命令行上正在执行镜像制作过程，顺利的话，就成功了
+
+![build](../images/nextjs-blog/build.jpg)
+
+```bash
+# 不出意外，可以看到刚才制作的镜像
+docker image ls
+```
+
+###### 第4步： 启动容器
+> 前提要在服务器上开好安全组
+
+```
+docker container run -d -p 80:3000 -it blog-demo
+# -d： 后台运行容器
+# -p: 前面80是本机服务器开放端口，后面3000是容器暴露出来的端口
+# --name：给容器命名
+```
+
+不出意外，容器成功运行。可以在浏览器里进行访问了。
+
+##### 4.2.2 使用`github actions`自动部署
+
+> 上面手动步骤太麻烦了，需要解放双手
+
+这里也可以选择dockerhub，注册好后，创建仓库，即可推送。阿里云的镜像容器服务，也需要提前开通准备好（命名空间+私人仓库）。
+
+###### 第1步：提前准备好
++ 容器登录账号+密码
++ 服务器的HOST + 登录账户 + 密码
++ 阿里云或者dockerhub的镜像容器仓库
+
+###### 第2步：github 该仓库Settings->Secrets 添加秘钥，即上面准备好的这5个
+
+> 我这里买的是阿里云的屌丝1核2G机器，生产环境别这么玩，账号密码可能泄露
+
+![secrets](../images/nextjs-blog/secrets.jpg)
+
+###### 第3步：项目根目录添加`github yml`配置文件
+
+> .github/workflows/deploy.yml
+
+```bash
+name: Docker Image CI
+
+on:
+  push: # push 时触发ci
+    branches: [main] # 作用于main分支
+  # pull_request:
+  #   branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 拉取main分支代码
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # 制作docker镜像并推送到阿里云容器镜像服务
+      - name: build and push docker image
+        run: |
+          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+
+          docker image build -t myblog:latest .
+          docker tag myblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+          docker push registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+          docker logout
+      # 登录远程服务器，拉取镜像，制作并重启容器
+      # https://github.com/marketplace/actions/remote-ssh-commands
+      - name: ssh remote deploy
+        uses: fifsky/ssh-action@master
+        with:
+          command: |
+            cd /
+            echo -e "1.docker login start==>"
+            echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+
+            echo -e "2.docker stop myblog container==>"
+            docker container stop myblog
+
+            echo -e "3.docker conatainer rm==>"
+            docker container rm myblog
+
+            echo -e "4.docker image rm==>"
+            docker image rm registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "5.docker pull==>"
+            docker pull registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "6.docker container create and start==>"
+            docker container run -d -p 80:3000 --name myblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+
+            echo -e "7.docker logout==>"
+            docker logout
+          host: ${{ secrets.HOST }}
+          user: ${{ secrets.USER }}
+          pass: ${{ secrets.PASSWORD }}
+
+```
+###### 第4步：提交代码，自动部署
+> 不出意外，在仓库的Actions里看到一切ok
+
+```
+git add .
+git commit -m "chore: add github actions yml"
+git push -u origin main
+```
+![deploy](../images/nextjs-blog/deploy.jpg)
+
+
+### 5. 参考资料
+
+1. [Next.js官方文档](https://nextjs.org/docs/getting-started)
+
+2. [如何优化 node 项目的 docker 镜像](https://juejin.cn/post/6991689670027542564)
+
+3. [Docker 入门教程](http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html)
+
+4. [前后端同构和模板渲染的区别是什么呢？](https://www.zhihu.com/question/379598562)
+
+5. [手把手教你用 Github Actions 部署前端项目](https://juejin.cn/post/6950799922178310152)

@@ -1,7 +1,7 @@
 ---
 title: "使用 Next.js + Docker 打造一个属于你的私人博客"
 keywords: "Next.js, Docker, github Actions, CI, CD"
-date: "2021-12-23"
+date: "2022-01-08"
 ---
 
 ### 1. Next.js 简介
@@ -12,7 +12,7 @@ date: "2021-12-23"
 
 ### 2. 为什么选择 Next.js
 
-> 老表，咋回事哦，vue 不能满足了吗，搞这玩意干嘛，[vuepress](https://www.vuepress.cn/) 写所谓的静态博客网站不香？香，还比这简单，但请容许我介绍完这个 Nextjs
+> 老表，咋回事哦，vue 不能满足了吗，搞这玩意干嘛，[vuepress](https://www.vuepress.cn/) 写所谓的静态博客网站不香？香，还比这简单，但请容许我介绍完这个 Next.js
 
 ![](../images/nextjs-blog/gs.jpg)
 
@@ -52,7 +52,7 @@ php 和 jsp 是解析模板文件，将数据渲染到文件上，最后将模�
 
 ### 3. Next.js 主要 api 快速上手
 
-> Node.js 版本 12.22.0 起步
+> **注意**：Node.js 版本 12.22.0 起步
 
 #### 3.1 使用`create-next-app`脚手架创建项目
 
@@ -92,9 +92,9 @@ yarn create next-app
 
 1. 文件系统路由
 
-`/pages/index.js` 路径为 `/`
-`/pages/posts/about.js` 路径为 `/posts/about`
-`/pages/posts/[id].js` 动态路径为 `/posts/foo` 或者`/posts/bar` 等等
++ `/pages/index.js` 路径为 `/`
++ `/pages/posts/about.js` 路径为 `/posts/about`
++ `/pages/posts/[id].js` 动态路径为 `/posts/foo` 或者`/posts/bar` 等等
 
 2. Link 组件
 
@@ -273,7 +273,7 @@ export default function Home() {
 4. [styled-components](https://github.com/vercel/next.js/tree/canary/examples/with-styled-components)（需自行配置）
 5. [Tailwind CSS](https://tailwindcss.com/docs/installation/using-postcss)（需自行配置）
 
-#### 3.8 Next.js 的 3 种基本预渲染方式
+#### 3.8 Next.js 的 3 种基本渲染方式
 
 1. Client-side Rendering
 
@@ -581,6 +581,10 @@ git push -u origin main
 ```
 
 ![deploy](../images/nextjs-blog/deploy.jpg)
+
+[当前博客点击预览](https://nextjs-blog-nine-delta-65.vercel.app/)
+
+![666](../images/nextjs-blog/666.png)
 
 ### 5. 参考资料
 

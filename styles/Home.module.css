@@ -93,6 +93,7 @@
 
 .content p svg {
   margin-right: 5px;
+  vertical-align: middle !important;
 }
 
 .content p:hover, .content p:active, .content p:focus {

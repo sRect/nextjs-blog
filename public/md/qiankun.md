@@ -4,8 +4,6 @@ keywords: "微前端, single-spa, qiankun"
 date: "2021-02-25"
 ---
 
-## qiankun demo
-
 > 1. [qiankun 官方文档](https://qiankun.umijs.org/zh)
 > 2. [single-spa](https://zh-hans.single-spa.js.org/docs/getting-started-overview/)
 > 3. [微前端-最容易看懂的微前端知识](https://juejin.cn/post/6844904162509979662#heading-0)

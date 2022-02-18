@@ -4,6 +4,9 @@ keywords: "cli, puppeteer"
 date: "2022-02-18"
 ---
 
+- [npm package](https://www.npmjs.com/package/juejin-save)
+- [github 源码仓库](https://github.com/sRect/juejin-save)
+
 ### 安装
 
 ```bash

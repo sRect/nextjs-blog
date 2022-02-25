@@ -1,11 +1,23 @@
 import Head from "next/head";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toast } from "antd-mobile";
+import useSWR from "swr";
 import hljs from "highlight.js";
 import LayoutCom from "@/components/LayoutCom";
 import { getPostData, getAllPostIds } from "@/lib/posts";
 import "github-markdown-css/github-markdown.css";
 import "highlight.js/styles/github.css";
+
+// https://stackblitz.com/github/vercel/next.js/tree/canary/examples/api-routes?file=pages%2Fperson%2F[id].js
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (res.status !== 200) {
+    throw new Error(data.message);
+  }
+  return data;
+};
 
 export async function getStaticPaths() {
   const allListData = await getAllPostIds();
@@ -32,6 +44,16 @@ export async function getStaticProps(args) {
 }
 
 export default function Post({ postData }) {
+  const [isWechat, setIsWechat] = useState(false);
+  // api查询实战
+  const { data } = useSWR(`/api/isWechat`, fetcher);
+
+  useEffect(() => {
+    if (data) {
+      if (data.isWechat) setIsWechat(true);
+    }
+  }, [data]);
+
   useEffect(() => {
     Toast.clear();
 
@@ -42,9 +64,9 @@ export default function Post({ postData }) {
   }, []);
 
   return (
-    <LayoutCom inTitle={postData.title}>
+    <LayoutCom inTitle={isWechat ? "" : postData.title}>
       <Head>
-        <title>文章详情</title>
+        <title>{isWechat ? postData.title : "文章详情"}</title>
       </Head>
       <article>
         <div

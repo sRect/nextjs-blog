@@ -5,19 +5,9 @@ import useSWR from "swr";
 import hljs from "highlight.js";
 import LayoutCom from "@/components/LayoutCom";
 import { getPostData, getAllPostIds } from "@/lib/posts";
+import { fetcher } from "@/utils/index";
 import "github-markdown-css/github-markdown.css";
 import "highlight.js/styles/github.css";
-
-// https://stackblitz.com/github/vercel/next.js/tree/canary/examples/api-routes?file=pages%2Fperson%2F[id].js
-const fetcher = async (url) => {
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (res.status !== 200) {
-    throw new Error(data.message);
-  }
-  return data;
-};
 
 export async function getStaticPaths() {
   const allListData = await getAllPostIds();

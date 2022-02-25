@@ -67,6 +67,18 @@ export default function List({ allListData }) {
     });
   };
 
+  const handleRefresh = async () => {
+    try {
+      const data = await fetch("/api/article/list", { method: "POST" }).then(
+        (res) => res.json()
+      );
+
+      setPageList(data?.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     setPageList(allListData);
 
@@ -92,7 +104,8 @@ export default function List({ allListData }) {
         ) : (
           <PullToRefresh
             onRefresh={async () => {
-              await sleep(1000);
+              await sleep(200);
+              await handleRefresh();
             }}
             renderText={(status) => {
               return <div>{PULL_REFRESH_STATUS[status]}</div>;

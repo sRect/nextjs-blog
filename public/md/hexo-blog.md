@@ -1,7 +1,7 @@
 ---
 title: "3分钟使用Hexo搭建自己的博客"
 keywords: "hexo, docker, github actions"
-date: "2202-3-24"
+date: "2022-3-24"
 ---
 
 - [本文 github 仓库](https://github.com/sRect/sRect.github.io)

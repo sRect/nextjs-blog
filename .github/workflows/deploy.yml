@@ -46,33 +46,33 @@ jobs:
           docker tag srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
           docker push registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
           docker logout
-      # 登录远程服务器，拉取镜像，制作并重启容器
-      # https://github.com/marketplace/actions/remote-ssh-commands
-      - name: ssh remote deploy
-        uses: fifsky/ssh-action@master
-        with:
-          command: |
-            cd /
-            echo -e "1.docker login start==>"
-            echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+      # # 登录远程服务器，拉取镜像，制作并重启容器
+      # # https://github.com/marketplace/actions/remote-ssh-commands
+      # - name: ssh remote deploy
+      #   uses: fifsky/ssh-action@master
+      #   with:
+      #     command: |
+      #       cd /
+      #       echo -e "1.docker login start==>"
+      #       echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login registry.cn-hangzhou.aliyuncs.com --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
 
-            echo -e "2.docker stop myblog container==>"
-            docker container stop srectblog
+      #       echo -e "2.docker stop myblog container==>"
+      #       docker container stop srectblog
 
-            echo -e "3.docker conatainer rm==>"
-            docker container rm srectblog
+      #       echo -e "3.docker conatainer rm==>"
+      #       docker container rm srectblog
 
-            echo -e "4.docker image rm==>"
-            docker image rm registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+      #       echo -e "4.docker image rm==>"
+      #       docker image rm registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
 
-            echo -e "5.docker pull==>"
-            docker pull registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+      #       echo -e "5.docker pull==>"
+      #       docker pull registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
 
-            echo -e "6.docker container create and start==>"
-            docker container run -d -p 80:3000 --name srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
+      #       echo -e "6.docker container create and start==>"
+      #       docker container run -d -p 80:3000 --name srectblog registry.cn-hangzhou.aliyuncs.com/test-blog/myblog:latest
 
-            echo -e "7.docker logout==>"
-            docker logout
-          host: ${{ secrets.HOST }}
-          user: ${{ secrets.USER }}
-          pass: ${{ secrets.PASSWORD }}
+      #       echo -e "7.docker logout==>"
+      #       docker logout
+      #     host: ${{ secrets.HOST }}
+      #     user: ${{ secrets.USER }}
+      #     pass: ${{ secrets.PASSWORD }}

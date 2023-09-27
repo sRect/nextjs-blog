@@ -9,9 +9,11 @@ date: "2023-5-23"
 - [本文 github 仓库链接](https://github.com/sRect/reactNativeBlogApp)
 - [本文掘金链接](https://juejin.cn/post/7234407587118530597)
 
-> 2023 年了，RN 也凉的差不多了。本文用 react native 做的 app 很简单，首页 + 列表页 + 详情页 + 关于页。总的感觉，涉及到原生方面，对于不会 android 和 ios 的 js 菜鸡，比较棘手，要折腾。
+> 本文用 react native 做的 app 很简单，首页 + 列表页 + 详情页 + 关于页。总的感觉，涉及到原生方面，对于不会 android 和 ios 的 js 菜鸡，比较棘手，要折腾。
 
 ![](../images/react-native/1.gif)
+
+> 关于Headless JS后台任务，可以参考《React Native Android 端Headless JS后台 GPS 持续定位》这篇文章
 
 ## 1. 前置基础
 
@@ -112,6 +114,47 @@ yarn react-native-asset
 4. 检查是否链接成功，android\app\src\main\assets 下是否有 fonts 文件夹
 
 ![](../images/react-native/3.png)
+
+5. 关于项目中使用了[@dr.pogodin/react-native-static-server
+](https://github.com/birdofpreyru/react-native-static-server#bundling-in-server-assets-into-an-app-statically)
+
+感谢 @小白菜 大佬的提供，`react-native-static-server`是一款可以在react native中，本地启动静态服务的库，文档中有提到`android/app/build.gradle`配置：
+
+```
+android {
+  sourceSets {
+    main {
+      assets.srcDirs = [
+        '../../assets'
+        // This array may contain additional asset folders to bundle-in.
+        // Paths in this array are relative to "build.gradle" file, and
+        // should be comma-separated.
+      ]
+    }
+  }
+  // ... Other stuff.
+}
+```
+
+这样配置过后，会导致`@ant-design/icons-react-native`字体无法正确加载。如果app内有其它静态资源，在配置assets.srcDirs的时候需要把 `=` 换成 `+=`，这样就可以加载字体图标了：
+
+```diff
+android {
+  sourceSets {
+    main {
+-      assets.srcDirs = [
++      assets.srcDirs += [
+        '../../assets'
+        // This array may contain additional asset folders to bundle-in.
+        // Paths in this array are relative to "build.gradle" file, and
+        // should be comma-separated.
+      ]
+    }
+  }
+  // ... Other stuff.
+}
+
+```
 
 ### 5.2 如何像 web 项目一样使用 env 环境变量？
 
@@ -1424,7 +1467,412 @@ const PageJumpTo = () => {
 export default memo(PageJumpTo);
 ```
 
-## 7. 调试
+### 6.3 调用自定义原生安卓模块-播放`raw`本地音频文件
+
+1. `android/app/src/main/java/com/your-app-name/`下新建`PlayMusicModule.java`文件
+
+```java
+package com.your-app-name;
+
+import android.media.MediaPlayer; 
+import android.content.res.AssetFileDescriptor;  
+import android.content.res.Resources;
+// import android.content.res.AssetManager;
+
+import com.facebook.react.bridge.NativeModule;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import javax.annotation.Nullable;
+
+public class PlayMusicModule extends ReactContextBaseJavaModule {
+  private static ReactApplicationContext reactContext;
+  private static final String TAGERROR = "PLAY_MUSICE_RROR";
+  private static final String AUDIO_PLAY = "play";
+  private static final String AUDIO_PAUSE = "pause";
+  private static final String AUDIO_STOP = "stop";
+  private static final String AUDIO_RELEASE = "release";
+
+  private MediaPlayer mediaPlayer;
+  private static final float BEEP_VOLUME = 9.10f;
+  private static final String PLAY_END = "playEnd";
+
+  public PlayMusicModule(ReactApplicationContext context) {
+    super(context);
+    reactContext = context;
+  }
+
+  private void sendEvent(ReactContext reactContext,
+                       String eventName,
+                       @Nullable WritableMap params) {
+    reactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit(eventName, params);
+  }
+
+  @ReactMethod
+  public void addListener(String eventName) {
+    // Set up any upstream listeners or background tasks as necessary
+  }
+  @ReactMethod
+  public void removeListeners(Integer count) {
+    // Remove upstream listeners, stop unnecessary background tasks
+  }
+
+  @Override
+  public String getName() {
+    return "PlayMusicManager";
+  }
+
+  @ReactMethod
+  public void control(String filename, String playOrPauseType, Promise promise) {
+    try {
+        
+
+        if(playOrPauseType.equals(AUDIO_PLAY)) {
+          if(mediaPlayer == null) {
+            // 获取Resources对象
+            Resources res = reactContext.getResources();
+            //  根据文件名获取资源 ID,比如 R.raw.music 
+            int resId = res.getIdentifier(filename, "raw", reactContext.getPackageName());
+            // MediaPlayer mediaPlayer = MediaPlayer.create(reactContext, resId);
+            mediaPlayer = new MediaPlayer();
+            // 监听播放结束
+            MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
+              @Override
+              public void onCompletion(MediaPlayer mp) {
+                // 播放结束时回调
+                WritableMap params = Arguments.createMap();
+                params.putString("filename", filename);
+                params.putString("playerEnd", PLAY_END);
+                sendEvent(reactContext, "backgroundMusicPlayEnd", params);
+              }
+            };
+            mediaPlayer.setOnCompletionListener(completionListener); 
+
+            // mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            AssetFileDescriptor afd = res.openRawResourceFd(resId);
+            mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            afd.close();
+            // mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
+
+            mediaPlayer.prepare(); // 准备
+            mediaPlayer.start(); // 播放
+          } else {
+            mediaPlayer.start(); // 继续播放
+          }
+          
+        } else if(playOrPauseType.equals(AUDIO_PAUSE)) {
+          mediaPlayer.pause(); // 暂停
+        } else if(playOrPauseType.equals(AUDIO_STOP)) {
+          mediaPlayer.stop(); // 停止
+        } else {
+          mediaPlayer.release(); // 释放资源
+          mediaPlayer = null;
+        }
+
+        WritableMap params2 = Arguments.createMap();
+        params2.putString("filename", filename);
+        params2.putString("playerStatus", playOrPauseType);
+
+        promise.resolve(params2);
+    } catch (Exception e) {
+        e.printStackTrace();
+        promise.reject(TAGERROR, e); 
+    }
+  }
+}
+```
+
+2. `android/app/src/main/java/com/your-app-name/PlayMusicModulePackage.java`
+
+```java
+package com.your-app-name;
+
+import com.facebook.react.ReactPackage;
+import com.facebook.react.bridge.NativeModule;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.uimanager.ViewManager;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class PlayMusicModulePackage implements ReactPackage {
+
+  @Override
+  public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
+    List<NativeModule> modules = new ArrayList<>();
+
+    modules.add(new PlayMusicModule(reactContext));
+
+    return modules;
+  }
+
+}
+```
+
+3. `android/app/src/main/java/com/your-app-name/MainApplication.java`
+
+```diff
++ import com.your-app-name.PlayMusicModulePackage;
+
+public class MainApplication extends Application implements ReactApplication {
+    ...
+    @Override
+    protected List<ReactPackage> getPackages() {
+      @SuppressWarnings("UnnecessaryLocalVariable")
+      List<ReactPackage> packages = new PackageList(this).getPackages();
+
++     packages.add(new PlayMusicModulePackage());// <-- 添加这一行，类名替换成你的Package类的名字 name.
+      return packages;
+    }
+    ...
+}
+
+```
+
+## 7. android端Headless JS（后台任务）
+
+> [Headless JS 是一种使用 js 在后台执行任务的方法。它可以用来在后台同步数据、处理推送通知或是播放音乐等等](https://www.reactnative.cn/docs/headless-js-android)
+
+### 7.1 几个关键api
+
+> [AppRegistry文档](https://www.reactnative.cn/docs/next/appregistry#cancelheadlesstask)
+
+1. `AppRegistry.registerHeadlessTask(taskKey, taskProvider)`：注册后台任务
+2. `AppRegistry.AppRegistryregisterCancellableHeadlessTask(taskKey, taskProvider, taskCancelProvider)`：注册可取消的后台任务
+3. `AppRegistry.startHeadlessTask(taskId, taskKey, data)`：开始后台任务
+4. `AppRegistry.cancelHeadlessTask(taskId, taskKey)`：取消后台任务
+
+### 7.2 `registerHeadlessTask`和`registerCancellableHeadlessTask` 主要区别
+
+> 来自chatgpt回答
+
+| registerHeadlessTask                                                                       | registerCancellableHeadlessTask                                                                     |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| 1. 注册的任务一旦开始执行,无法取消 <br /> 2. 任务会在应用切入后台时启动,并在应用回到前台时暂停 <br /> 3. 适用于需要确保任务得到执行的场景,比如数据同步等 | 1. 注册的任务可以在执行时取消 <br /> 2. 任务只在应用切入后台时启动,应用回到前台时任务会被取消 <br /> 3. 适用于不需要任务一定得到执行,可以根据需要取消的场景,比如定时推送等 |
+
+### 7.3 将`src/assets/mp3`下的静态音频文件同步到android和ios端
+
+**注意：** 这里**音频文件夹的命令**很重要，上面5.1章节用[`react-native-asset`](https://github.com/unimonkiez/react-native-asset)同步静态资源，这里对音频文件夹的命名固定为`mp3`，否则音频静态文件无法同步。同步成功后，android端会在`android/app/src/main/res/raw`下看到同步过去的音频文件
+
+### 7.4 app后台播放音频示例步骤
+
+> 由于是直接打入apk内的音频文件，所以无需在`AndroidManifest.xml`添加额外权限读取
+
+1.  `android/app/src/main/java/com/your-app-name/MyHeadlessJsTaskService.java`
+
+```java
+package com.your-app-name;
+
+import android.content.Intent;
+import android.os.Bundle;
+import com.facebook.react.HeadlessJsTaskService;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.jstasks.HeadlessJsTaskConfig;
+import javax.annotation.Nullable;
+// import com.amazonaws.retry.HeadlessJsRetryPolicy;
+// import com.amazonaws.retry.LinearCountingRetryPolicy;
+
+public class MyHeadlessJsTaskService extends HeadlessJsTaskService {
+
+  @Override
+  protected @Nullable HeadlessJsTaskConfig getTaskConfig(Intent intent) {
+    Bundle extras = intent.getExtras();
+    // HeadlessJsRetryPolicy retryPolicy = new LinearCountingRetryPolicy(
+    //   3, // Max number of retry attempts
+    //   1000 // Delay between each retry attempt
+    // );
+    if (extras != null) {
+      return new HeadlessJsTaskConfig(
+          "backgroundPlayMusic",
+          Arguments.fromBundle(extras),
+          5000, // 任务的超时时间
+          false // 可选参数：是否允许任务在前台运行，默认为false
+        );
+    }
+    return null;
+  }
+}
+```
+
+2.  `android/app/src/main/AndroidManifest.xml`
+
+```xml
+<application> 
+    ... 
+    + <service android:name="com.your-app-name.MyHeadlessJsTaskService" /> 
+</application>
+```
+
+3.  `index.js`中注册后台任务
+
+```diff
+import {AppRegistry} from 'react-native';
+import App from './App';
+import {name as appName} from './app.json';
++ import {backgroundPlayMusic} from './src/utils';
+
+AppRegistry.registerComponent(appName, () => App);
++ AppRegistry.registerHeadlessTask('backgroundPlayMusic', () => backgroundPlayMusic);
+```
+
+4.  `src/utils/index.js`具体执行后台任务
+
+```javascript
+import {NativeModules} from 'react-native';
+
+let PlayMusicManager = NativeModules.PlayMusicManager;
+
+// 后台播放音乐
+async function backgroundPlayMusic(data) {
+  try {
+    console.log('backgroundPlayMusic task:', data);
+
+    const {mp3FileName, playerStatus} = data.payload;
+
+    const res = await PlayMusicManager.control(mp3FileName, playerStatus);
+    console.log('backgroundPlayMusic res:', res);
+
+    return Promise.resolve();
+    // const {taskId, taskKey} = data;
+
+    // AppRegistry.cancelHeadlessTask(taskId, taskKey);
+  } catch (error) {
+    console.error('backgroundPlayMusic error', error);
+
+    return Promise.reject();
+  }
+}
+
+export {
+  backgroundPlayMusic,
+  PlayMusicManager,
+};
+```
+
+5.  页面UI中点击某按钮执行后台任务播放音频
+
+```javascript
+import React, {memo, useEffect, useState} from 'react';
+import {NativeEventEmitter, NativeModules, AppRegistry,} from 'react-native';
+ 
+ const BackgroundTask = () => {
+     const [headlessTaskId, setHeadlessTaskId] = useState('');
+
+    // 在后台播放音乐
+    const handleBackgroundPlayMusic = async type => {
+    try {
+      const taskId = Math.ceil(Math.random() * 10000000);
+      const taskKey = 'backgroundPlayMusic';
+      let mp3FileName = 'amaji'; // amaji.mp3
+    
+      if (type === 'play') {
+        if (!headlessTaskId) {
+          console.log('开始后台任务', taskId, type);
+          AppRegistry.startHeadlessTask(taskId, taskKey, {
+            taskId,
+            taskKey,
+            payload: {
+              mp3FileName,
+              playerStatus: 'play',
+              taskId,
+            },
+          });
+          setHeadlessTaskId(taskId);
+        } else {
+          console.log('继续播放');
+          await PlayMusicManager.control(mp3FileName, 'play');
+        }
+      } else {
+        if (type === 'pause') {
+          await PlayMusicManager.control(mp3FileName, 'pause');
+        } else {
+          await PlayMusicManager.control(mp3FileName, 'release');
+          console.log('结束后台任务', headlessTaskId);
+          AppRegistry.cancelHeadlessTask(headlessTaskId, taskKey);
+          setHeadlessTaskId('');
+        }
+      }
+    } catch (error) {
+      console.error('backgroundPlayMusicTask error', error);
+    }
+    
+    useEffect(() => {
+        // 监听后台任务音乐播放结束
+        const eventEmitter = new NativeEventEmitter(NativeModules.PlayMusicManager);
+        
+        const eventListener = eventEmitter.addListener(
+          'backgroundMusicPlayEnd',
+          event => {
+            console.log('backgroundMusicPlayEnd:', event);
+        
+            setHeadlessTaskId('');
+          },
+        );
+        
+        return () => {
+          eventListener && eventListener.remove(); // 组件卸载时记得移除监听事件
+        };
+    }, []);
+    
+    return (
+      <View style={styles.backgroundTask}>
+        <Button
+          type="ghost"
+          size="small"
+          style={styles.backgroundTaskBtn}
+          onPress={() => handleBackgroundPlayMusic('play')}>
+          播放
+        </Button>
+        <Button
+          type="ghost"
+          size="small"
+          style={styles.backgroundTaskBtn}
+          disabled={headlessTaskId === ''}
+          onPress={() => handleBackgroundPlayMusic('pause')}>
+          暂停
+        </Button>
+        <Button
+          type="ghost"
+          size="small"
+          style={styles.backgroundTaskBtn}
+          disabled={headlessTaskId === ''}
+          onPress={() => handleBackgroundPlayMusic('release')}>
+          结束
+        </Button>
+      </View>
+    ); 
+ }
+ 
+ export default memo(BackgroundTask);
+```
+
+### 7.5 存在的疑问
+
+一番操作下来，算是可以在后台播放音频了，而且应用切到后台，手机锁屏后，也没问题。
+
+但是，直接调用封装好的`PlayMusicManager.control(mp3FileName, 'play');`，把app切换到后台，执行锁屏，音频也是播放的啊，也没中断，干嘛还要在`AppRegistry.startHeadlessTask`中播放音频呢...
+
+chagpt给我的答案是：
+
+    这是因为React Native的音频播放是默认运行在一个单独的线程中,
+    即使app进入后台或锁屏,这个线程仍然在运行,所以音频会继续播放。
+
+
+## 8. 调试
 
 1. Chrome 浏览器 的 DevTools 来调试 Hermes 上的 JS
 
@@ -1446,10 +1894,10 @@ npx react-devtools
 adb reverse tcp:8097 tcp:8097
 ```
 
-## 8. 打包发布
+## 9. 打包发布
 
 跟着[文档](https://www.reactnative.cn/docs/signed-apk-android)来即可
 
-## 9. 总结
+## 10. 总结
 
 练习时长 2 月半，远远不够，app 很粗糙，距离上架还有一段距离，况且代码里现在只兼顾到了 android，忽略了 ios。
